@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tic Tac Toe - AI & 2 Player</title>
+  <title>Tic Tac Toe - Fun Mode</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #141e30, #243b55);
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       color: #fff;
       margin: 0;
       padding: 20px;
@@ -27,29 +25,35 @@
       font-size: 3rem;
       margin-bottom: 10px;
       color: #00ffff;
-      text-shadow: 0 0 10px #00ffffaa;
+      text-shadow: 0 0 15px #00ffffaa;
     }
 
     .controls {
       margin: 10px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
     }
 
     select, button {
       font-size: 1rem;
       padding: 8px 12px;
-      margin: 0 5px;
-      border-radius: 6px;
+      border-radius: 8px;
       border: none;
+      outline: none;
+      cursor: pointer;
+      background: #ffffffcc;
+      color: #000;
     }
 
     #game {
       display: grid;
       grid-template-columns: repeat(3, 100px);
       gap: 15px;
-      background: rgba(255, 255, 255, 0.05);
       padding: 20px;
       border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(10px);
     }
 
@@ -61,13 +65,13 @@
       color: #fff;
       background: rgba(255, 255, 255, 0.1);
       border: 2px solid #00ffff;
-      border-radius: 12px;
+      border-radius: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 10px #00ffff55;
+      transition: transform 0.3s, background 0.3s;
+      position: relative;
     }
 
     .cell:hover {
@@ -75,19 +79,23 @@
       transform: scale(1.05);
     }
 
-    .cell.x {
-      color: #ff5252;
-      text-shadow: 0 0 5px #ff5252cc;
-    }
-
-    .cell.o {
-      color: #1abc9c;
-      text-shadow: 0 0 5px #1abc9ccc;
-    }
+    .cell.x { color: #ff5252; text-shadow: 0 0 5px #ff5252aa; }
+    .cell.o { color: #1abc9c; text-shadow: 0 0 5px #1abc9caa; }
 
     .message {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       margin: 15px 0;
+      text-shadow: 0 0 8px #ffffff88;
+    }
+
+    .highlight {
+      background: rgba(255, 255, 255, 0.15) !important;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { box-shadow: 0 0 10px #00ffff55; }
+      to { box-shadow: 0 0 20px #00ffffaa; }
     }
 
     #restartButton {
@@ -121,6 +129,16 @@
       h1 {
         font-size: 2.2rem;
       }
+
+      .controls {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      select, button {
+        width: 90%;
+        max-width: 250px;
+      }
     }
   </style>
 </head>
@@ -141,13 +159,17 @@
       <option value="O">O</option>
     </select>
 
-    <button id="restartButton">Restart</button>
+    <button id="restartButton">🔁 Restart</button>
   </div>
 
   <div id="game"></div>
-
   <div class="message" id="message"></div>
   <div class="score" id="score">Score - X: 0 | O: 0</div>
+
+  <!-- 🎵 Sound effects -->
+  <audio id="clickSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_26183d9f2f.mp3"></audio>
+  <audio id="winSound" src="https://cdn.pixabay.com/audio/2022/02/23/audio_7f31cd1f87.mp3"></audio>
+  <audio id="drawSound" src="https://cdn.pixabay.com/audio/2022/10/26/audio_53c8d9f3f4.mp3"></audio>
 
   <script>
     const game = document.getElementById('game');
@@ -156,6 +178,9 @@
     const playerSelect = document.getElementById('playerSelect');
     const modeSelect = document.getElementById('modeSelect');
     const scoreDiv = document.getElementById('score');
+    const clickSound = document.getElementById('clickSound');
+    const winSound = document.getElementById('winSound');
+    const drawSound = document.getElementById('drawSound');
 
     let currentPlayer = 'X';
     let boardState = Array(9).fill('');
@@ -180,21 +205,25 @@
     function handleClick(index) {
       if (!gameActive || boardState[index] !== '') return;
 
+      clickSound.play();
       boardState[index] = currentPlayer;
       const cell = document.querySelector(`.cell[data-index="${index}"]`);
       cell.textContent = currentPlayer;
       cell.classList.add(currentPlayer.toLowerCase());
 
       if (checkWinner(currentPlayer)) {
-        message.textContent = `Player ${currentPlayer} wins!`;
+        message.innerHTML = `🎉 <strong>${currentPlayer}</strong> wins!`;
         scores[currentPlayer]++;
         updateScores();
         gameActive = false;
+        winSound.play();
+        highlightWin(currentPlayer);
         return;
       }
 
       if (boardState.every(cell => cell !== '')) {
-        message.textContent = "It's a draw!";
+        message.innerHTML = "🤝 It's a draw!";
+        drawSound.play();
         gameActive = false;
         return;
       }
@@ -204,7 +233,7 @@
         setTimeout(() => aiMove(), 300);
       } else {
         currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-        message.textContent = `Player ${currentPlayer}'s turn`;
+        message.textContent = `🎮 Player ${currentPlayer}'s turn`;
       }
     }
 
@@ -215,34 +244,47 @@
       const cell = document.querySelector(`.cell[data-index="${bestMove}"]`);
       cell.textContent = aiPlayer;
       cell.classList.add(aiPlayer.toLowerCase());
+      clickSound.play();
 
       if (checkWinner(aiPlayer)) {
-        message.textContent = `Player ${aiPlayer} wins!`;
+        message.innerHTML = `🤖 <strong>${aiPlayer}</strong> wins!`;
         scores[aiPlayer]++;
         updateScores();
         gameActive = false;
+        winSound.play();
+        highlightWin(aiPlayer);
         return;
       }
 
       if (boardState.every(cell => cell !== '')) {
-        message.textContent = "It's a draw!";
+        message.innerHTML = "🤝 It's a draw!";
+        drawSound.play();
         gameActive = false;
         return;
       }
 
       currentPlayer = humanPlayer;
-      message.textContent = `Your turn (${humanPlayer})`;
+      message.textContent = `🎯 Your turn (${humanPlayer})`;
     }
 
     function checkWinner(player) {
-      const winCombos = [
+      const combos = [
         [0,1,2],[3,4,5],[6,7,8],
         [0,3,6],[1,4,7],[2,5,8],
         [0,4,8],[2,4,6]
       ];
-      return winCombos.some(combo =>
+      return combos.find(combo =>
         combo.every(i => boardState[i] === player)
       );
+    }
+
+    function highlightWin(player) {
+      const winCombo = checkWinner(player);
+      if (winCombo) {
+        winCombo.forEach(i => {
+          document.querySelector(`.cell[data-index="${i}"]`).classList.add('highlight');
+        });
+      }
     }
 
     function updateScores() {
@@ -262,11 +304,9 @@
         move.index = i;
         newBoard[i] = player;
 
-        if (player === aiPlayer) {
-          move.score = minimax(newBoard, humanPlayer).score;
-        } else {
-          move.score = minimax(newBoard, aiPlayer).score;
-        }
+        move.score = player === aiPlayer
+          ? minimax(newBoard, humanPlayer).score
+          : minimax(newBoard, aiPlayer).score;
 
         newBoard[i] = '';
         moves.push(move);
@@ -285,9 +325,7 @@
       gameActive = true;
       message.textContent = mode === 'AI' ? `Your turn (${humanPlayer})` : `Player ${currentPlayer}'s turn`;
       createBoard();
-      if (mode === 'AI' && humanPlayer === 'O') {
-        aiMove();
-      }
+      if (mode === 'AI' && humanPlayer === 'O') setTimeout(aiMove, 400);
     });
 
     modeSelect.addEventListener('change', () => restartButton.click());
