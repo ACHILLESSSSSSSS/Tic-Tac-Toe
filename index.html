@@ -133,37 +133,47 @@
       font-size: 1rem;
     }
 
-    @media (max-width: 500px) {
-      h1 {
-        font-size: 2rem;
-      }
+ @media (max-width: 500px) {
+  h1 {
+    font-size: 2rem;
+  }
 
-      .controls {
-        flex-direction: column;
-        width: 100%;
-        gap: 10px;
-      }
+  .controls {
+    flex-wrap: nowrap;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+  }
 
-      select, button {
-        width: 100%;
-        max-width: 300px;
-        font-size: 1.1rem;
-      }
+  .controls label {
+    display: none; /* hide labels to save space */
+  }
 
-      #game {
-        grid-template-columns: repeat(3, 80px);
-        gap: 12px;
-      }
+  select, button {
+    flex: 1 1 auto;
+    min-width: 90px;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
 
-      .cell {
-        width: 80px;
-        height: 80px;
-        font-size: 2rem;
-      }
+  #game {
+    grid-template-columns: repeat(3, 80px);
+    gap: 12px;
+  }
 
-      .message {
-        font-size: 1.2rem;
-      }
+  .cell {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+  }
+
+  .message {
+    font-size: 1.2rem;
+  }
+}
+
     }
   </style>
 </head>
